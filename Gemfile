@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'mechanize', github: 'sparklemotion/mechanize'
 gem 'nokogiri', '~> 1.6.2.1'
+gem 'activerecord'
 
 gem 'byebug'
 

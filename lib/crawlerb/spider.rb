@@ -4,14 +4,12 @@ require 'nokogiri'
 
 class Spider
   def Crawl
-    scheduler = Scheduler.instance
-    scheduler.push start_url
+    Scheduler.instance.push start_url
 
     agent = Mechanize.new
     agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
     loop do
-      url = scheduler.pop
-      # p url
+      url = Scheduler.instance.pop
       begin
         page = agent.get url
         page.links.each { |link| push_link link }
@@ -19,8 +17,8 @@ class Spider
       rescue => e
         next
       end
-      doc = Nokogiri::HTML(page.body)
-      pase doc
+      str = page.body
+      pase str
     end
   end
 
