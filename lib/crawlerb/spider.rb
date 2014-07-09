@@ -3,6 +3,12 @@ require 'mechanize'
 require 'nokogiri'
 
 class Spider
+  def self.exclude(*formats)
+    define_method :exclude do
+      formats
+    end
+  end
+
   def Crawl
     Scheduler.instance.push start_url
 
@@ -10,6 +16,7 @@ class Spider
     agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
     loop do
       url = Scheduler.instance.pop
+      return if url.nil?
       begin
         page = agent.get url
         page.links.each { |link| push_link link }
@@ -32,14 +39,24 @@ class Spider
 
   private
   def push_link(link)
+    if self.class.method_defined? :exclude
+      exclude.each do |format|
+        if link.href.downcase.include? format
+          p "exclude: #{link.href}"
+          return
+        end
+      end
+    end
+
     scheduler = Scheduler.instance
     begin
       if link.uri.host.nil?
         scheduler.push link.resolved_uri.to_s
       else
-        scheduler.push link.href if link.uri.host == uri.host
+        scheduler.push link.uri.to_s if link.uri.host == URI(start_url).host
       end
     rescue => e
+      p e
     end
   end
 end
