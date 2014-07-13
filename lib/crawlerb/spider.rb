@@ -41,10 +41,7 @@ class Spider
   def push_link(link)
     if self.class.method_defined? :exclude
       exclude.each do |format|
-        if link.href.downcase.include? format
-          p "exclude: #{link.href}"
-          return
-        end
+        return if link.href.downcase.include? format
       end
     end
 
