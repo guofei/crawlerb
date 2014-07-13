@@ -9,7 +9,7 @@ class Spider
     end
   end
 
-  def Crawl
+  def crawl
     Scheduler.instance.push start_url
 
     agent = Mechanize.new
@@ -25,7 +25,7 @@ class Spider
         next
       end
       str = page.body
-      pase str
+      parse str
     end
   end
 
@@ -48,7 +48,7 @@ class Spider
     scheduler = Scheduler.instance
     begin
       if link.uri.host.nil?
-        scheduler.push link.resolved_uri.to_s
+        scheduler.push link.resolved_uri.to_s if link.resolved_uri.host == URI(start_url).host
       else
         scheduler.push link.uri.to_s if link.uri.host == URI(start_url).host
       end
