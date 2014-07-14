@@ -22,14 +22,15 @@ class Spider
         page.links.each { |link| push_link link }
         page.iframes.each { |link| push_link link }
       rescue => e
+        p e
         next
       end
       str = page.body
-      parse str
+      parse str, url
     end
   end
 
-  def pase(doc)
+  def pase(doc, url)
     raise 'Called abstract method !!'
   end
 
@@ -41,19 +42,28 @@ class Spider
   def push_link(link)
     if self.class.method_defined? :exclude
       exclude.each do |format|
-        return if link.href.downcase.include? format
+        begin
+          return if resolve_uri(link).to_s.downcase.include? format
+        rescue => e
+          p e
+          return
+        end
       end
     end
 
     scheduler = Scheduler.instance
     begin
-      if link.uri.host.nil?
-        scheduler.push link.resolved_uri.to_s if link.resolved_uri.host == URI(start_url).host
-      else
-        scheduler.push link.uri.to_s if link.uri.host == URI(start_url).host
-      end
+      scheduler.push resolve_uri(link).to_s if URI(start_url).host == resolve_uri(link).host
     rescue => e
       p e
+    end
+  end
+
+  def resolve_uri(link)
+    if link.uri.host.nil?
+      link.resolved_uri
+    else
+      link.uri
     end
   end
 end
