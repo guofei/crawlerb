@@ -1,21 +1,29 @@
-require 'byebug'
 require 'mechanize'
 require 'nokogiri'
 
 module Crawlerb
+  module Rule
+    def self.included(spider)
+      spider.extend ClassMethods
+    end
+
+    module ClassMethods
+      def exclude(*formats)
+        define_method :exclude do
+          formats
+        end
+      end
+
+      def start_url(url)
+        define_method :start_url do
+          url
+        end
+      end
+    end
+  end
 
   class Spider
-    def self.exclude(*formats)
-      define_method :exclude do
-        formats
-      end
-    end
-
-    def self.start_url(url)
-      define_method :start_url do
-        url
-      end
-    end
+    include Rule
 
     def crawl
       Scheduler.instance.push start_url
@@ -24,13 +32,14 @@ module Crawlerb
       agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
       loop do
         url = Scheduler.instance.pop
+        STDERR.puts url
         return if url.nil?
         begin
           page = agent.get url
           page.links.each { |link| push_link link }
           page.iframes.each { |link| push_link link }
         rescue => e
-          p e
+          STDERR.puts e
           next
         end
         str = page.body
@@ -42,10 +51,6 @@ module Crawlerb
       raise 'Called abstract method !!'
     end
 
-    def start_url
-      raise 'Called abstract method !!'
-    end
-
     private
     def push_link(link)
       if self.class.method_defined? :exclude
@@ -53,7 +58,7 @@ module Crawlerb
           begin
             return if resolve_uri(link).to_s.downcase.include? format
           rescue => e
-            p e
+            STDERR.puts e
             return
           end
         end
@@ -63,7 +68,7 @@ module Crawlerb
       begin
         scheduler.push resolve_uri(link).to_s if URI(start_url).host == resolve_uri(link).host
       rescue => e
-        p e
+        STDERR.puts e
       end
     end
 
