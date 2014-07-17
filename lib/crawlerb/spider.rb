@@ -8,9 +8,15 @@ module Crawlerb
     end
 
     module ClassMethods
-      def exclude(*formats)
-        define_method :exclude do
-          formats
+      def url_exclude(*strs)
+        define_method :url_exclude do
+          strs
+        end
+      end
+
+      def url_include(*strs)
+        define_method :url_include do
+          strs
         end
       end
 
@@ -53,15 +59,11 @@ module Crawlerb
 
     private
     def push_link(link)
-      if self.class.method_defined? :exclude
-        exclude.each do |format|
-          begin
-            return if resolve_uri(link).to_s.downcase.include? format
-          rescue => e
-            STDERR.puts e
-            return
-          end
-        end
+      begin
+        link_check link
+      rescue => e
+        STDERR.puts e
+        return
       end
 
       scheduler = Scheduler.instance
@@ -69,6 +71,19 @@ module Crawlerb
         scheduler.push resolve_uri(link).to_s if URI(start_url).host == resolve_uri(link).host
       rescue => e
         STDERR.puts e
+      end
+    end
+
+    def link_check(link)
+      if self.class.method_defined? :url_exclude
+        url_exclude.each do |str|
+          return if resolve_uri(link).to_s.downcase.include? str
+        end
+      end
+      if self.class.method_defined? :url_include
+        url_include.each do |str|
+          return unless resolve_uri(link).to_s.downcase.include? format
+        end
       end
     end
 
