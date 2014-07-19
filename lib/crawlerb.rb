@@ -1,4 +1,5 @@
 require 'crawlerb/core'
 require 'crawlerb/scheduler'
+require 'crawlerb/downloader'
 require 'crawlerb/spider'
 require 'crawlerb/item'
