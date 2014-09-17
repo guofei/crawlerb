@@ -3,6 +3,22 @@ require 'mechanize'
 module Crawlerb
 
   module Rule
+    def rule
+      url_include_a = []
+      url_exclude_a = []
+      url_include_a = url_include if self.class.method_defined? :url_include
+      url_exclude_a = url_exclude if self.class.method_defined? :url_exclude
+      {include: url_include_a, exclude: url_exclude_a}
+    end
+
+    def parse?(url)
+      return true if rule[:include].length == 0
+      rule[:include].each do |s|
+        return true if url.to_s.include? s
+      end
+      return false
+    end
+
     def self.included(spider)
       spider.extend ClassMethods
     end
@@ -34,14 +50,14 @@ module Crawlerb
     def crawl
       Scheduler.instance.push start_url
 
-      downloader = Downloader.new
+      downloader = Downloader.new rule
       loop do
         url = Scheduler.instance.pop
         STDERR.puts url
         return if url.nil?
         begin
           body = downloader.download url
-          parse body, url
+          parse body, url if parse? url
         rescue => e
           STDERR.puts e
         end

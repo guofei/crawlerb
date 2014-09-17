@@ -1,11 +1,13 @@
 require 'mechanize'
+require 'byebug'
 
 module Crawlerb
 
   class Downloader
-    def initialize
+    def initialize(rule)
       @agent = Mechanize.new
       @agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      @rule = rule
     end
 
     def download(url)
@@ -26,6 +28,7 @@ module Crawlerb
       begin
         return unless link_check link
       rescue => e
+        STDERR.puts "check link error"
         STDERR.puts e
         return
       end
@@ -34,20 +37,15 @@ module Crawlerb
       begin
         scheduler.push resolve_uri(link).to_s if URI(@url).host == resolve_uri(link).host
       rescue => e
+        STDERR.puts "push link error"
         STDERR.puts e
       end
     end
 
     def link_check(link)
-      if self.class.method_defined? :url_exclude
-        url_exclude.each do |str|
-          return false if resolve_uri(link).to_s.downcase.include? str
-        end
-      end
-      if self.class.method_defined? :url_include
-        url_include.each do |str|
-          return false unless resolve_uri(link).to_s.downcase.include? str
-        end
+      return false if link.href.nil? || link.href.to_s.include?("javascript:")
+      @rule[:exclude].each do |str|
+        return false if resolve_uri(link).to_s.downcase.include? str
       end
       return true;
     end
