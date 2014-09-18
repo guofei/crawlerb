@@ -9,7 +9,7 @@ module Crawlerb
 
     # get next url
     def pop
-      @urls.pop
+      @urls.shift
     end
 
     # push domain to scheduler

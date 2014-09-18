@@ -59,6 +59,7 @@ module Crawlerb
           body = downloader.download url
           parse body, url if parse? url
         rescue => e
+          STDERR.puts "parse error"
           STDERR.puts e
         end
       end
