@@ -6,6 +6,7 @@ module Crawlerb
   class Downloader
     def initialize(rule)
       @agent = Mechanize.new
+      @agent.max_history = 1
       @agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
       @rule = rule
     end
