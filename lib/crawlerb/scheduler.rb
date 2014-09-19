@@ -2,24 +2,28 @@ require 'set'
 require 'singleton'
 require 'uri'
 
+require "redis"
+
 module Crawlerb
 
   class Scheduler
     include Singleton
+    def initialize
+      @redis = Redis.new(:host => "127.0.0.1", :port => 6379, :db => 15)
+    end
 
     # get next url
     def pop
-      @urls.shift
+      @redis.spop "url"
     end
 
     # push domain to scheduler
     def push(url)
-      @urls ||= []
-      @history ||= Set.new
-      unless @history.include? url
-        @history.add url if check_url(url)
-        @urls.push url if check_url(url)
-      end
+      return unless check_url url
+      return if @redis.sismember "history", url
+
+      @redis.sadd "history", url
+      @redis.sadd "url", url
     end
 
     private
