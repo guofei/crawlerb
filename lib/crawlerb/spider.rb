@@ -50,7 +50,7 @@ module Crawlerb
     def crawl
       Scheduler.instance.push start_url
 
-      downloader = Downloader.new rule
+      downloader = Downloader.new(rule)
       loop do
         url = Scheduler.instance.pop
         STDERR.puts url

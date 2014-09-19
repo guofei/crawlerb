@@ -17,6 +17,10 @@ module Crawlerb
       @redis.spop "url"
     end
 
+    def started?
+      @redis.scard("url") > 0
+    end
+
     # push domain to scheduler
     def push(url)
       return unless check_url url
