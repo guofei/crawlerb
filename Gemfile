@@ -1,10 +1,8 @@
 source 'https://rubygems.org'
 
 gem 'mechanize', github: 'sparklemotion/mechanize'
-gem 'nokogiri', '~> 1.6.2.1'
-
-gem 'redis', '~> 3.1.0'
-gem 'activerecord'
+gem 'nokogiri'
+gem 'redis'
 
 gem 'byebug'
 

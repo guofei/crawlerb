@@ -1,7 +1,4 @@
-require 'mechanize'
-
 module Crawlerb
-
   module Rule
     def rule
       url_include_a = []
@@ -49,15 +46,19 @@ module Crawlerb
 
     def crawl
       Scheduler.instance.push start_url
-
       downloader = Downloader.new(rule)
+
       loop do
         url = Scheduler.instance.pop
         STDERR.puts url
         return if url.nil?
+
         begin
           body = downloader.download url
           parse body, url if parse? url
+          downloader.each_link do |link|
+            Scheduler.instance.push link
+          end
         rescue => e
           STDERR.puts "parse error"
           STDERR.puts e
@@ -69,5 +70,4 @@ module Crawlerb
       raise 'Called abstract method !!'
     end
   end
-
 end

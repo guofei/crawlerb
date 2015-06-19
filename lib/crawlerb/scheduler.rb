@@ -1,15 +1,15 @@
-require 'set'
-require 'singleton'
 require 'uri'
+require 'singleton'
 
 require "redis"
 
 module Crawlerb
-
   class Scheduler
     include Singleton
+
     def initialize
       @redis = Redis.new(:host => "127.0.0.1", :port => 6379, :db => 15)
+      #@redis = Redis.current
     end
 
     # get next url
@@ -26,8 +26,10 @@ module Crawlerb
       return unless check_url url
       return if @redis.sismember "history", url
 
-      @redis.sadd "history", url
-      @redis.sadd "url", url
+      @redis.multi do
+        @redis.sadd "history", url
+        @redis.sadd "url", url
+      end
     end
 
     private
@@ -35,5 +37,4 @@ module Crawlerb
       url =~ /\A#{URI::regexp(['http', 'https'])}\z/
     end
   end
-
 end

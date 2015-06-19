@@ -1,8 +1,6 @@
 require 'mechanize'
-require 'byebug'
 
 module Crawlerb
-
   class Downloader
     def initialize(rule)
       @agent = Mechanize.new
@@ -11,44 +9,47 @@ module Crawlerb
       @rule = rule
     end
 
-    def download(url)
+    def download(url, &block)
       @url = url
-      page = @agent.get url
-      push_links page
-      page.body
+      @page = @agent.get url
+      @page.body
+    end
+
+    def each_link(&block)
+      @page.links.each do |link|
+        if check(link)
+          block.call resolve_uri(link).to_s
+        end
+      end
+
+      @page.iframes.each do |link|
+        if check(link)
+          block.call resolve_uri(link).to_s
+        end
+      end
     end
 
     private
 
-    def push_links(page)
-      page.links.each { |link| push_link link }
-      page.iframes.each { |link| push_link link }
-    end
-
-    def push_link(link)
+    def check(link)
       begin
-        return unless link_check link
-      rescue => e
-        STDERR.puts "check link error"
-        STDERR.puts e
-        return
-      end
+        return false if link.href.nil? || link.href.to_s.include?("javascript:")
+        @rule[:exclude].each do |str|
+          return false if resolve_uri(link).to_s.downcase.include? str
+        end
 
-      scheduler = Scheduler.instance
-      begin
-        scheduler.push resolve_uri(link).to_s if URI(@url).host == resolve_uri(link).host
+        if same_host?(link)
+          return true
+        else
+          return false
+        end
       rescue => e
-        STDERR.puts "push link error"
-        STDERR.puts e
+        return false
       end
     end
 
-    def link_check(link)
-      return false if link.href.nil? || link.href.to_s.include?("javascript:")
-      @rule[:exclude].each do |str|
-        return false if resolve_uri(link).to_s.downcase.include? str
-      end
-      return true;
+    def same_host?(url)
+      URI(@url).host == resolve_uri(url).host
     end
 
     def resolve_uri(link)
@@ -58,6 +59,5 @@ module Crawlerb
         link.uri
       end
     end
-
   end
 end
