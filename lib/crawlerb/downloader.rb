@@ -9,27 +9,28 @@ module Crawlerb
       @rule = rule
     end
 
-    def download(url, &block)
+    def download(url)
       @url = url
-      @page = @agent.get url
-      @page.body
-    end
+      page = @agent.get url
 
-    def each_link(&block)
-      @page.links.each do |link|
-        if check(link)
-          block.call resolve_uri(link).to_s
-        end
+      each_link page do |link|
+        scheduler.push link
       end
 
-      @page.iframes.each do |link|
-        if check(link)
-          block.call resolve_uri(link).to_s
-        end
-      end
+      page.body
     end
 
     private
+
+    def each_link(page, &block)
+      lmbd = ->(link) { block.call resolve_uri(link).to_s if check(link) }
+      page.links.each &lmbd
+      page.iframes.each &lmbd
+    end
+
+    def scheduler
+      @scheduler ||= Scheduler.instance
+    end
 
     def check(link)
       begin
